@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OPERAÇÃO VERANEIO 2025 — Apresentação de Serviço</title>
+  <!-- Ícones para desktop e mobile -->
+  <link rel="icon" href="icon.png" sizes="any">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="theme-color" content="#b40018"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>OPERAÇÃO VERANEIO 2025</h1>
+      <p class="subtitle">Sistema de Apresentação de Serviço vinculado ao APP WhatsApp</p>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- Página Inicial -->
+    <section id="home" class="page active">
+      <h2>SELECIONE UMA PRAIA</h2>
+      <div class="grid">
+        <button class="btn" data-open="laguna_ilha">Laguna — Região da Ilha</button>
+        <button class="btn" data-open="praia_vila">Praia da Vila</button>
+        <button class="btn" data-open="praia_jaguaruna">Praia de Jaguaruna</button>
+        <button class="btn" data-open="laguna_sede">Laguna</button>
+      </div>
+    </section>
+
+    <!-- Template de página de praia (clonado via JS) -->
+    <template id="beach-template">
+      <section class="page">
+        <div class="page-head">
+          <button class="btn back" data-open="home">← Voltar</button>
+          <h2 class="beach-title"></h2>
+        </div>
+
+        <div class="coord-box">
+          <label>
+            Coordenação — Graduação e Nome (MAIÚSCULO)
+            <input type="text" class="coord-input upper" placeholder="Ex.: SD BM NOME" />
+          </label>
+          <label>
+            Observações
+            <textarea class="obs-input" placeholder="Constar embarcações, e alterações da região."></textarea>
+          </label>
+        </div>
+
+        <div class="posts"></div>
+
+        <div class="actions">
+          <button class="btn sendwa">Enviar pelo WhatsApp</button>
+          <button class="btn clear">Limpar seleções</button>
+        </div>
+      </section>
+    </template>
+  </main>
+
+  <footer class="foot">
+    <small>•CBMSC — Uso interno</small>
+  </footer>
+
+  <script>
+  const BEACHES = [
+    {
+      id: "laguna_ilha",
+      title: "Laguna — Região da Ilha",
+      posts: [
+        "Tamborete",
+        "Ipoa",
+        "Galheta Sul",
+        "Galheta Norte",
+        "Prainha Farol",
+        "Cardoso"
+      ]
+    },
+    {
+      id: "praia_vila",
+      title: "Praia da Vila",
+      posts: [
+        "Posto de Itapiruba Norte",
+        "Posto Campo da Aviação",
+        "Posto do Praia da Vila (Rimsa)",
+        "Posto Praia da Vila",
+        "Posto da Praia da Vila Central",
+        "Posto do canto da Praia da Vila",
+        "Posto do errado",
+        "Posto da Praia do Porto"
+      ]
+    },
+    {
+      id: "praia_jaguaruna",
+      title: "Praia de Jaguaruna",
+      posts: [
+        "Camacho",
+        "Dunas do Sul",
+        "Paraíso",
+        "Figueirinha",
+        "Arroio Norte",
+        "Arroio Central",
+        "Arroio Sul",
+        "Lagoa",
+        "Campo bom 1",
+        "Campo bom 2",
+        "Campo bom 3",
+        "Campo bom 4",
+        "Campo bom 5",
+        "Copa 70",
+        "Esplanada",
+        "Esplanada sul"
+      ]
+    },
+    {
+      id: "laguna_sede",
+      title: "Laguna",
+      posts: [
+        "Mar Grosso",
+        "Iró"
+      ]
+    }
+  ];
+
+  const app = document.getElementById("app");
+  const home = document.getElementById("home");
+  const template = document.getElementById("beach-template");
+
+  // Navegação entre páginas
+  function openPage(id) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    if (id === "home") {
+      home.classList.add("active");
+      return;
+    }
+    const page = document.getElementById(id);
+    if (page) page.classList.add("active");
+  }
+
+  document.addEventListener("click", (e) => {
+    const openId = e.target.getAttribute("data-open");
+    if (openId) openPage(openId);
+  });
+
+  // Cria páginas das praias a partir do template
+  function buildBeachPage({id, title, posts}) {
+    const clone = template.content.cloneNode(true);
+    const section = clone.querySelector("section");
+    section.id = id;
+    section.querySelector(".beach-title").textContent = title;
+
+    const postsContainer = section.querySelector(".posts");
+
+    posts.forEach((postName, idx) => {
+      const postRow = document.createElement("div");
+      postRow.className = "post-row";
+      postRow.dataset.postIndex = idx;
+
+      postRow.innerHTML = `
+        <div class="post-head">
+          <strong class="post-name">${postName}</strong>
+          <div class="gvc-controls">
+            <button class="btn small minus" title="Remover GVC">−</button>
+            <span class="gvc-count">0</span>
+            <button class="btn small plus" title="Adicionar GVC">+</button>
+          </div>
+        </div>
+
+        <div class="post-options">
+          <label class="inline">
+            <input type="checkbox" class="chk-acessivel"/>
+            Praia acessível
+          </label>
+
+          <label class="embarcacao-label">
+            Embarcação (MAIÚSCULO e NEGRITO)
+            <input class="embarcacao-input upper bold" type="text" placeholder="Ex.: JET - 01"/>
+          </label>
+        </div>
+      `;
+
+      const minusBtn = postRow.querySelector(".minus");
+      const plusBtn = postRow.querySelector(".plus");
+      const countSpan = postRow.querySelector(".gvc-count");
+
+      let gvcCount = 0;
+
+      minusBtn.addEventListener("click", () => {
+        if (gvcCount > 0) {
+          gvcCount -= 1;
+          countSpan.textContent = gvcCount;
+        }
+      });
+
+      plusBtn.addEventListener("click", () => {
+        gvcCount += 1;
+        countSpan.textContent = gvcCount;
+      });
+
+      postRow._state = {
+        getCount: () => gvcCount,
+        setCount: (v) => { gvcCount = Math.max(0, v); countSpan.textContent = gvcCount; }
+      };
+      postsContainer.appendChild(postRow);
+    });
+
+    // Enviar pelo WhatsApp
+    section.querySelector(".sendwa").addEventListener("click", () => {
+      const coord = section.querySelector(".coord-input").value.trim();
+      const obs = section.querySelector(".obs-input").value.trim();
+      const beachName = title;
+
+      let lines = [];
+      lines.push(`Bom dia, assumindo serviço de *${beachName}*.`);
+      if (coord) {
+        lines.push(`Coordenação *${coord.toUpperCase()}*, *${beachName}*.`);
+      } else {
+        lines.push(`Coordenação *[PREENCHER COORDENAÇÃO]*, *${beachName}*.`);
+      }
+
+      section.querySelectorAll(".post-row").forEach(row => {
+        const postName = row.querySelector(".post-name").textContent;
+        const embarc = row.querySelector(".embarcacao-input").value.trim();
+        const acessivel = row.querySelector(".chk-acessivel").checked;
+        const count = row._state.getCount();
+
+        if (count === 0 && !acessivel && !embarc) return;
+
+        let postLines = [];
+        postLines.push(`*${postName}*`);
+        if (count > 0) postLines.push(`${count} GVC *(Integral)*`);
+        if (acessivel) postLines.push(`Praia acessível`);
+        if (embarc) postLines.push(`*${embarc.toUpperCase()}*`);
+
+        lines.push(postLines.join("\n"));
+      });
+
+      if (obs) {
+        lines.push(`\n_Observações:_ ${obs}`);
+      }
+
+      lines.push(`\n_*Bom serviço a todos*._`);
+
+      const msg = lines.join("\n\n");
+      const encoded = encodeURIComponent(msg);
+      const mobile = `whatsapp://send?text=${encoded}`;
+      const web = `https://wa.me/?text=${encoded}`;
+
+      const timeout = setTimeout(() => {
+        window.open(web, "_blank");
+      }, 800);
+      window.location.href = mobile;
+      window.addEventListener("pagehide", () => clearTimeout(timeout));
+    });
+
+    // Limpar
+    section.querySelector(".clear").addEventListener("click", () => {
+      section.querySelector(".coord-input").value = "";
+      section.querySelector(".obs-input").value = "";
+      section.querySelectorAll(".post-row").forEach(row => {
+        row.querySelector(".chk-acessivel").checked = false;
+        row.querySelector(".embarcacao-input").value = "";
+        row._state.setCount(0);
+      });
+    });
+
+    app.appendChild(clone);
+  }
+
+  BEACHES.forEach(buildBeachPage);
+
+  // Campos em maiúsculo (efeito visual)
+  document.addEventListener("input", (e) => {
+    if (e.target.classList.contains("upper")) {
+      e.target.value = e.target.value.toUpperCase();
+    }
+  });
+  </script>
+</body>
+</html>
