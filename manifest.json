@@ -1,0 +1,16 @@
+{
+    "name": "Operação Veraneio 2025",
+    "short_name": "OV2025",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#b40018",
+    "icons": [
+      {
+        "src": "icon.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }
+  
