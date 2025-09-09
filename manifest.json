@@ -1,6 +1,6 @@
 {
     "name": "Operação Veraneio 2025",
-    "short_name": "OV2025",
+    "short_name": "Operação Veraneio 2025",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",
@@ -13,4 +13,5 @@
       }
     ]
   }
+
   
